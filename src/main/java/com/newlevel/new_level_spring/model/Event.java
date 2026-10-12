@@ -74,6 +74,12 @@ public class Event {
   @Column(name = "difficulty", nullable = false)
   private Difficulty difficulty;
 
+  @Column(name = "actual_start_at")
+  private LocalDateTime actualStartAt;
+
+  @Column(name = "actual_end_at")
+  private LocalDateTime actualEndAt;
+
   @PrePersist
   @PreUpdate
   private void validateDates() {

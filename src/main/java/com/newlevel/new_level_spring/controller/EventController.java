@@ -75,4 +75,15 @@ public class EventController {
   public void deleteEvent(@PathVariable Long eventId, @AuthenticationPrincipal Jwt jwt) {
     service.deleteEvent(eventId, jwt);
   }
+
+  @PatchMapping("/{eventId}/complete")
+  public EventResponseDTO completeEventByTime(@PathVariable Long eventId, @AuthenticationPrincipal Jwt jwt) {
+    return service.completeEventByTime(eventId, jwt);
+  }
+
+  @PatchMapping("/{eventId}/start")
+  public EventResponseDTO startEvent(@PathVariable Long eventId, @AuthenticationPrincipal Jwt jwt) {
+    return service.startEvent(eventId, jwt);
+  }
+
 }

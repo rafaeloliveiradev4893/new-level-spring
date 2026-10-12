@@ -65,6 +65,29 @@ public class EventService {
       .collect(Collectors.toList());
   }
 
+  @Transactional
+  public EventResponseDTO startEvent(Long eventId, Jwt jwt) {
+    String auth0Id = jwt.getSubject();
+
+    Event event = findEventOwnedByUser(eventId, auth0Id);
+
+    if (event.getIsCompleted()) {
+      throw new ResponsiveStatusExeption(
+        "Não é possível iniciar um evento concluído"
+      );
+    }
+
+    if (event.getActualStartAt() != null) {
+      throw new ResponsiveStatusExeption(
+        "O evento já foi iniciado"
+      );
+    }
+
+    event.setActualStartAt(LocalDateTime.now());
+
+    return toResponseDTO(eventRepository.save(event));
+  }
+
   public EventResponseDTO getEventById(Long eventId, Jwt jwt) {
     String auth0Id = jwt.getSubject();
 
@@ -140,7 +163,29 @@ public class EventService {
     event.setCompletedAt(LocalDateTime.now());
     event.setIsCompleted(true);
 
-    xpService.addXpForTaskCompletion(user, event.getDifficulty());
+    xpService.addXpForTaskCompletion(user, event.getDifficulty(), event.getCategory());
+    userRepository.save(user);
+
+    return toResponseDTO(eventRepository.save(event));
+  }
+
+  @Transactional
+  public EventResponseDTO completeEventByTime(Long eventId, Jwt jwt) {
+    String auth0Id = jwt.getSubject();
+    User user = userRepository.findById(auth0Id)
+      .orElseThrow(() -> new ResponsiveStatusExeption("Usuário não encontrado"));
+
+    Event event = findEventOwnedByUser(eventId, auth0Id);
+
+    if (event.getIsCompleted()) {
+      throw new ResponsiveStatusExeption("O evento já foi completo");
+    }
+
+    event.setActualEndAt(LocalDateTime.now());
+    event.setCompletedAt(event.getActualEndAt());
+    event.setIsCompleted(true);
+
+    xpService.addXpForTaskCompletion(user, event.getDifficulty(), event.getCategory());
     userRepository.save(user);
 
     return toResponseDTO(eventRepository.save(event));
@@ -188,6 +233,8 @@ public class EventService {
       .completedAt(event.getCompletedAt())
       .createdAt(event.getCreatedAt())
       .updatedAt(event.getUpdatedAt())
+      .actualStartAt(event.getActualStartAt())
+      .actualEndAt(event.getActualEndAt())
       .build();
   }
 }
