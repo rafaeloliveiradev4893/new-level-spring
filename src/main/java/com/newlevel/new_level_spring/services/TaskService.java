@@ -3,11 +3,15 @@ package com.newlevel.new_level_spring.services;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.newlevel.new_level_spring.model.Subtask;
+import com.newlevel.new_level_spring.model.DTOS.SubtaskRequestDTO;
+import com.newlevel.new_level_spring.model.DTOS.SubtaskResponseDTO;
 import com.newlevel.new_level_spring.exception.ResponsiveStatusExeption;
 import com.newlevel.new_level_spring.model.DTOS.TaskRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.TaskResponseDTO;
@@ -40,11 +44,52 @@ public class TaskService {
     task.setDueDate(dto.getDueDate());
     task.setCategory(dto.getCategory());
     task.setDifficulty(dto.getDifficulty());
-    task.setCreatedAt(LocalDateTime.now());
-    task.setUpdatedAt(LocalDateTime.now());
+
+    if (dto.getSubtasks() != null) {
+      dto.getSubtasks().forEach(s -> task.addSubtask(buildSubtask(s)));
+    }
+
     taskRepository.save(task);
     return toResponseDTO(task);
   }
+
+  @Transactional
+  public TaskResponseDTO addSubtask(Long taskId, Jwt jwt, SubtaskRequestDTO dto) {
+    Task task = findTaskOwnedByUser(taskId, jwt.getSubject());
+
+    if (task.getIsCompleted()) {
+      throw new ResponsiveStatusExeption("Não é possível adicionar subtarefas a uma tarefa concluída");
+    }
+
+    task.addSubtask(buildSubtask(dto));
+    return toResponseDTO(taskRepository.save(task));
+  }
+
+  @Transactional
+  public TaskResponseDTO completeSubtask(Long taskId, Long subtaskId, Jwt jwt) {
+    Task task = findTaskOwnedByUser(taskId, jwt.getSubject());
+    Subtask subtask = findSubtaskInTask(task, subtaskId);
+
+    if (subtask.getIsCompleted()) {
+      throw new ResponsiveStatusExeption("A subtarefa já foi completa");
+    }
+
+    subtask.setIsCompleted(true);
+    subtask.setCompletedAt(LocalDateTime.now());
+
+    return toResponseDTO(taskRepository.save(task));
+  }
+
+  @Transactional
+  public TaskResponseDTO deleteSubtask(Long taskId, Long subtaskId, Jwt jwt) {
+    Task task = findTaskOwnedByUser(taskId, jwt.getSubject());
+    Subtask subtask = findSubtaskInTask(task, subtaskId);
+
+    task.removeSubtask(subtask); // orphanRemoval apaga do banco
+    return toResponseDTO(taskRepository.save(task));
+  }
+
+
 
   public List<TaskResponseDTO> listTasksByUser(Jwt jwt) {
     String auth0Id = jwt.getSubject();
@@ -148,7 +193,21 @@ public class TaskService {
     return task;
   }
 
-  public TaskResponseDTO toResponseDTO(Task task){
+  private Subtask buildSubtask(SubtaskRequestDTO dto) {
+    if (dto.getTitle() == null || dto.getTitle().isBlank()) {
+      throw new ResponsiveStatusExeption("O título da subtarefa é obrigatório");
+    }
+    return Subtask.builder().title(dto.getTitle().trim()).build();
+  }
+
+  private Subtask findSubtaskInTask(Task task, Long subtaskId) {
+    return task.getSubtasks().stream()
+      .filter(s -> s.getId().equals(subtaskId))
+      .findFirst()
+      .orElseThrow(() -> new ResponsiveStatusExeption("Subtarefa não encontrada"));
+  }
+
+  public TaskResponseDTO toResponseDTO(Task task) {
     return TaskResponseDTO.builder()
       .category(task.getCategory())
       .completedAt(task.getCompletedAt())
@@ -160,6 +219,14 @@ public class TaskService {
       .title(task.getTitle())
       .updatedAt(task.getUpdatedAt())
       .isCompleted(task.getIsCompleted())
+      .subtasks(task.getSubtasks().stream()
+        .map(s -> SubtaskResponseDTO.builder()
+          .id(s.getId())
+          .title(s.getTitle())
+          .isCompleted(s.getIsCompleted())
+          .completedAt(s.getCompletedAt())
+          .build())
+        .collect(Collectors.toList()))
       .build();
   }
 }

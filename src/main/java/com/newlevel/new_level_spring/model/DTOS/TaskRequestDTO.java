@@ -1,6 +1,7 @@
 package com.newlevel.new_level_spring.model.DTOS;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.newlevel.new_level_spring.types.Category;
 import com.newlevel.new_level_spring.types.Difficulty;
@@ -27,4 +28,6 @@ public class TaskRequestDTO {
   private Difficulty difficulty;
 
   private LocalDate dueDate;
+
+  private List<SubtaskRequestDTO> subtasks;
 }

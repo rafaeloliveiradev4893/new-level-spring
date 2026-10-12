@@ -2,6 +2,7 @@ package com.newlevel.new_level_spring.model.DTOS;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.newlevel.new_level_spring.types.Category;
 import com.newlevel.new_level_spring.types.Difficulty;
@@ -22,4 +23,5 @@ public class TaskResponseDTO {
     private Category category;
     private Difficulty difficulty;
     private Boolean isCompleted;
+    private List<SubtaskResponseDTO> subtasks;
 }
