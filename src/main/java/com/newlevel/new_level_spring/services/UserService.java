@@ -55,7 +55,7 @@ public class UserService {
         new ResponsiveStatusExeption("Usuário não encontrado")
       );
 
-      String name = jwt.getClaimAsString("name");
+    String name = jwt.getClaimAsString("name"); //tá vindo como null
 
 
     user.setName(name);
@@ -65,6 +65,7 @@ public class UserService {
     return toResponseDTO(updatedUser);
   }
 
+  //Não é possivel deletar o Usuario
   public void deleteUser(Jwt jwt) {
 
     String auth0Id = jwt.getSubject();

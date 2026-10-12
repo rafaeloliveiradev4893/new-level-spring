@@ -18,6 +18,9 @@ import com.newlevel.new_level_spring.model.DTOS.TaskRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.TaskResponseDTO;
 import com.newlevel.new_level_spring.model.DTOS.TaskUpdateDTO;
 import com.newlevel.new_level_spring.services.TaskService;
+import com.newlevel.new_level_spring.model.DTOS.SubtaskRequestDTO;
+import com.newlevel.new_level_spring.model.DTOS.SubtaskUpdateDTO;
+
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -62,5 +65,25 @@ public class TaskController {
   @DeleteMapping("/{taskId}")
   public void deleteTask(@PathVariable Long taskId, @AuthenticationPrincipal Jwt jwt) {
     service.deleteTask(taskId, jwt);
+  }
+
+  @PostMapping("/{taskId}/subtasks")
+  public TaskResponseDTO addSubtask(@PathVariable Long taskId, @Valid @RequestBody SubtaskRequestDTO subtaskDTO, @AuthenticationPrincipal Jwt jwt) {
+    return service.addSubtask(taskId, jwt, subtaskDTO);
+  }
+
+  @PatchMapping("/{taskId}/subtasks/{subtaskId}/done")
+  public TaskResponseDTO completeSubtask(@PathVariable Long taskId, @PathVariable Long subtaskId, @AuthenticationPrincipal Jwt jwt) {
+    return service.completeSubtask(taskId, subtaskId, jwt);
+  }
+
+  @DeleteMapping("/{taskId}/subtasks/{subtaskId}")
+  public TaskResponseDTO deleteSubtask(@PathVariable Long taskId, @PathVariable Long subtaskId, @AuthenticationPrincipal Jwt jwt) {
+    return service.deleteSubtask(taskId, subtaskId, jwt);
+  }
+
+  @PatchMapping("/{taskId}/subtasks/{subtaskId}")
+  public TaskResponseDTO updateSubtask(@PathVariable Long taskId, @PathVariable Long subtaskId, @Valid @RequestBody SubtaskUpdateDTO subtaskDTO, @AuthenticationPrincipal Jwt jwt) {
+    return service.updateSubtask(taskId, subtaskId, jwt, subtaskDTO);
   }
 }

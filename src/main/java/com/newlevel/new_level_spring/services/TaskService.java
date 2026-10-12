@@ -3,7 +3,6 @@ package com.newlevel.new_level_spring.services;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.ArrayList;
 
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -12,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.newlevel.new_level_spring.model.Subtask;
 import com.newlevel.new_level_spring.model.DTOS.SubtaskRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.SubtaskResponseDTO;
+import com.newlevel.new_level_spring.model.DTOS.SubtaskUpdateDTO;
 import com.newlevel.new_level_spring.exception.ResponsiveStatusExeption;
 import com.newlevel.new_level_spring.model.DTOS.TaskRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.TaskResponseDTO;
@@ -89,7 +89,18 @@ public class TaskService {
     return toResponseDTO(taskRepository.save(task));
   }
 
+  @Transactional
+  public TaskResponseDTO updateSubtask(Long taskId, Long subtaskId, Jwt jwt, SubtaskUpdateDTO dto) {
+    Task task = findTaskOwnedByUser(taskId, jwt.getSubject());
+    Subtask subtask = findSubtaskInTask(task, subtaskId);
 
+    if (dto.getTitle() == null || dto.getTitle().isBlank()) {
+      throw new ResponsiveStatusExeption("O título da subtarefa é obrigatório");
+    }
+
+    subtask.setTitle(dto.getTitle().trim());
+    return toResponseDTO(taskRepository.save(task));
+  }
 
   public List<TaskResponseDTO> listTasksByUser(Jwt jwt) {
     String auth0Id = jwt.getSubject();
