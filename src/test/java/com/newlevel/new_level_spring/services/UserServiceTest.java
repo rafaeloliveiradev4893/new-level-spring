@@ -55,6 +55,10 @@ public class UserServiceTest {
     assertNotNull(response);
     //assertEquals(auth0Id, response.getAuth0Id());
     assertEquals("rafa", response.getName());
+    assertNotNull(response.getAtributos());
+    assertEquals(0, response.getAtributos().getForca());
+    assertNotNull(response.getAtributosXp());
+    assertEquals(0, response.getAtributosXp().getForca());
   }
 
   @Test 

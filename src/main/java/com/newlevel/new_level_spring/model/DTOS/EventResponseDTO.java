@@ -26,4 +26,6 @@ public class EventResponseDTO {
   private LocalDateTime completedAt;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
+  private LocalDateTime actualStartAt;
+  private LocalDateTime actualEndAt;
 }

@@ -93,7 +93,8 @@ public class UserService {
       .builder()
       .name(user.getName())
       .level(user.getLevel())
-      .currentXp(user.getCurrentXp())
+      .atributos(user.getAtributos())
+      .atributosXp(user.getAtributosXp())
       .createdAt(user.getCreatedAt())
       .build();
   }

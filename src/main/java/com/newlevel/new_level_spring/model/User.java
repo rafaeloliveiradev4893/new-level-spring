@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -34,8 +35,12 @@ public class User {
   private int level = 0;
 
   @Builder.Default
-  @Column(name = "current_xp", nullable = false)
-  private int currentXp = 0;
+  @Embedded
+  private Atributos atributos = new Atributos();
+
+  @Builder.Default
+  @Embedded
+  private AtributosXp atributosXp = new AtributosXp();
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false, nullable = false)

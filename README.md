@@ -178,4 +178,3 @@ Itens planejados que **não estão disponíveis** na API hoje:
 - Endpoint dedicado de XP (o XP é somado automaticamente ao concluir tarefas e eventos, mas não há rota para consultá-lo ou alterá-lo)
 - Desfazer a conclusão de uma tarefa, subtarefa ou evento
 - Regra entre subtarefas e tarefa (exigir subtarefas concluídas, ou concluir a tarefa automaticamente)
-- Edição das subtarefas pelos endpoints `PUT`/`PATCH` da tarefa

@@ -182,7 +182,7 @@ public class TaskService {
 
     // deve completar todas as subtasks caso ouver
     
-    xpService.addXpForTaskCompletion(user, task.getDifficulty());
+    xpService.addXpForTaskCompletion(user, task.getDifficulty(), task.getCategory());
     userRepository.save(user);
 
     return toResponseDTO(taskRepository.save(task));
