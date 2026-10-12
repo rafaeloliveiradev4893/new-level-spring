@@ -74,8 +74,6 @@ Resposta:
 }
 ```
 
-https://dev-c5nck27zn1v43s53.us.auth0.com/authorize?response_type=token&client_id=jj7WfvjIQ2ZLd1ZuIJW9SGnkKmVRBuja&redirect_uri=http://localhost:4200/&audience=https://newlevelauth.com&scope=openid profile email
-
 # .env exemple
 
 ```env
