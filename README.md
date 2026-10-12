@@ -1,6 +1,8 @@
 # new-level-spring
 API com Spring
 
+Autenticação via Auth0. Execute localmente com `docker compose up` após copiar `.env.example` para `.env`. Rotas atuais: `/api/user` e `/api/task`. Testes: `./mvnw test`. O endpoint de XP ainda é planejado e não está implementado.
+
 # User
 
 ## User
