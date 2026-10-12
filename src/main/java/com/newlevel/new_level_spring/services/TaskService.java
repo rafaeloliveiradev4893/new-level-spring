@@ -74,6 +74,7 @@ public class TaskService {
       throw new ResponsiveStatusExeption("A subtarefa já foi completa");
     }
 
+    //subtask completa deveria dar xp
     subtask.setIsCompleted(true);
     subtask.setCompletedAt(LocalDateTime.now());
 
@@ -178,6 +179,8 @@ public class TaskService {
     task.setCompletedAt(LocalDateTime.now());
     task.setUpdatedAt(LocalDateTime.now());
     task.setIsCompleted(true);
+
+    // deve completar todas as subtasks caso ouver
     
     xpService.addXpForTaskCompletion(user, task.getDifficulty());
     userRepository.save(user);
