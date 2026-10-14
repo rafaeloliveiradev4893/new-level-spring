@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 public class UserService {
   
+  private static final String AUTH0_NAME_CLAIM = "https://newlevelauth.com/name";
+
   private final UserRepository userRepository;
   //Metodos externos
   public UserResponseDTO getCurrentUser(Jwt jwt) {
@@ -30,21 +32,29 @@ public class UserService {
 
   public UserResponseDTO createUser(Jwt jwt) {
 
-      String auth0Id = jwt.getSubject();
-      String name = jwt.getClaimAsString("name");
+    String auth0Id = jwt.getSubject();
 
-      if (existUserById(auth0Id)) {
-          throw new ResponsiveStatusException(HttpStatus.CONFLICT, "Usuário já existe");
-      }
+    if (existUserById(auth0Id)) {
+      throw new ResponsiveStatusException(HttpStatus.CONFLICT, "Usuário já existe");
+    }
 
-      User newUser = User.builder()
-          .auth0Id(auth0Id)
-          .name(name)
-          .build();
+    String name = jwt.getClaimAsString(AUTH0_NAME_CLAIM);
 
-      User savedUser = userRepository.save(newUser);
+    if (name == null || name.isBlank()) {
+      throw new ResponsiveStatusException(
+        HttpStatus.BAD_REQUEST,
+        "O token não contém o nome do usuário"
+      );
+    }
 
-      return toResponseDTO(savedUser);
+    User newUser = User.builder()
+    .auth0Id(auth0Id)
+    .name(name)
+    .build();
+
+    User savedUser = userRepository.save(newUser);
+
+    return toResponseDTO(savedUser);
   }
 
   public UserResponseDTO updateUser( Jwt jwt) {
@@ -52,11 +62,18 @@ public class UserService {
     String auth0Id = jwt.getSubject();
 
     User user = userRepository.findById(auth0Id)
-      .orElseThrow(() ->
-        new ResponsiveStatusException("Usuário não encontrado")
-      );
+    .orElseThrow(() ->
+      new ResponsiveStatusException("Usuário não encontrado")
+    );
 
-    String name = jwt.getClaimAsString("name"); //tá vindo como null
+    String name = jwt.getClaimAsString(AUTH0_NAME_CLAIM);
+
+    if (name == null || name.isBlank()) {
+      throw new ResponsiveStatusException(
+        HttpStatus.BAD_REQUEST,
+        "O token não contém o nome do usuário"
+      );
+    }
 
 
     user.setName(name);
