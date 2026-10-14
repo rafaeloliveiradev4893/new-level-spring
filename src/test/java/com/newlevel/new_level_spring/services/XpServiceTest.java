@@ -52,4 +52,17 @@ class XpServiceTest {
     assertEquals(40, user.getAtributosXp().getCarisma());
     assertEquals(1, user.getLevel());
   }
+
+  @Test
+  void carriesExcessXpIntoTheNextLevelProgress() {
+    User user = User.builder().auth0Id("user-1").build();
+
+    for (int i = 0; i < 6; i++) {
+      xpService.addXpForTaskCompletion(user, Difficulty.HARD, Category.HEALTH);
+    }
+
+    assertEquals(2, user.getAtributos().getConstituicao());
+    assertEquals(40, user.getAtributosXp().getConstituicao());
+    assertEquals(2, user.getLevel());
+  }
 }

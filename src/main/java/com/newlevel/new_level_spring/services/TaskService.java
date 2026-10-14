@@ -13,7 +13,7 @@ import com.newlevel.new_level_spring.model.Subtask;
 import com.newlevel.new_level_spring.model.DTOS.SubtaskRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.SubtaskResponseDTO;
 import com.newlevel.new_level_spring.model.DTOS.SubtaskUpdateDTO;
-import com.newlevel.new_level_spring.exception.ResponsiveStatusExeption;
+import com.newlevel.new_level_spring.exception.ResponsiveStatusException;
 import com.newlevel.new_level_spring.model.DTOS.TaskRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.TaskResponseDTO;
 import com.newlevel.new_level_spring.model.DTOS.TaskUpdateDTO;
@@ -36,7 +36,7 @@ public class TaskService {
   @Transactional
   public TaskResponseDTO createTask(Jwt jwt, TaskRequestDTO dto) {
     User user = userRepository.findById(jwt.getSubject())
-      .orElseThrow(() -> new ResponsiveStatusExeption("Usuário não encontrado"));
+      .orElseThrow(() -> new ResponsiveStatusException("Usuário não encontrado"));
 
     Task task = new Task();
     task.setTitle(dto.getTitle());
@@ -59,7 +59,7 @@ public class TaskService {
     Task task = findTaskOwnedByUser(taskId, jwt.getSubject());
 
     if (task.getIsCompleted()) {
-      throw new ResponsiveStatusExeption(
+      throw new ResponsiveStatusException(
         HttpStatus.CONFLICT,
         "Não é possível adicionar subtarefas a uma tarefa concluída"
       );
@@ -75,7 +75,7 @@ public class TaskService {
     Subtask subtask = findSubtaskInTask(task, subtaskId);
 
     if (subtask.getIsCompleted()) {
-      throw new ResponsiveStatusExeption(HttpStatus.CONFLICT, "A subtarefa já foi completa");
+      throw new ResponsiveStatusException(HttpStatus.CONFLICT, "A subtarefa já foi completa");
     }
 
     subtask.setIsCompleted(true);
@@ -108,7 +108,7 @@ public class TaskService {
     Subtask subtask = findSubtaskInTask(task, subtaskId);
 
     if (dto.getTitle() == null || dto.getTitle().isBlank()) {
-      throw new ResponsiveStatusExeption(
+      throw new ResponsiveStatusException(
         HttpStatus.BAD_REQUEST,
         "O título da subtarefa é obrigatório"
       );
@@ -183,12 +183,12 @@ public class TaskService {
   public TaskResponseDTO completeTask(Long taskId, Jwt jwt) {
     String auth0Id = jwt.getSubject();
     User user = userRepository.findById(jwt.getSubject())
-      .orElseThrow(() -> new ResponsiveStatusExeption("Usuário não encontrado"));
+      .orElseThrow(() -> new ResponsiveStatusException("Usuário não encontrado"));
     
     Task task = findTaskOwnedByUser(taskId, auth0Id);
 
     if (task.getIsCompleted()) {
-      throw new ResponsiveStatusExeption(HttpStatus.CONFLICT, "A tarefa já foi completa");
+      throw new ResponsiveStatusException(HttpStatus.CONFLICT, "A tarefa já foi completa");
     }
 
     task.setCompletedAt(LocalDateTime.now());
@@ -220,17 +220,17 @@ public class TaskService {
   private Task findTaskOwnedByUser(Long taskId, String auth0Id) {
 
     Task task = taskRepository.findById(taskId)
-      .orElseThrow(() -> new ResponsiveStatusExeption("Tarefa não encontrada"));
+      .orElseThrow(() -> new ResponsiveStatusException("Tarefa não encontrada"));
 
     if (!task.getUser().getAuth0Id().equals(auth0Id)) {
-      throw new ResponsiveStatusExeption("Tarefa não encontrada");
+      throw new ResponsiveStatusException("Tarefa não encontrada");
     }
     return task;
   }
 
   private Subtask buildSubtask(SubtaskRequestDTO dto) {
     if (dto.getTitle() == null || dto.getTitle().isBlank()) {
-      throw new ResponsiveStatusExeption(
+      throw new ResponsiveStatusException(
         HttpStatus.BAD_REQUEST,
         "O título da subtarefa é obrigatório"
       );
@@ -242,7 +242,7 @@ public class TaskService {
     return task.getSubtasks().stream()
       .filter(s -> s.getId().equals(subtaskId))
       .findFirst()
-      .orElseThrow(() -> new ResponsiveStatusExeption("Subtarefa não encontrada"));
+      .orElseThrow(() -> new ResponsiveStatusException("Subtarefa não encontrada"));
   }
 
   public TaskResponseDTO toResponseDTO(Task task) {

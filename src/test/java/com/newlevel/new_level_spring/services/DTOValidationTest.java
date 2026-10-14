@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import com.newlevel.new_level_spring.exception.ResponsiveStatusExeption;
+import com.newlevel.new_level_spring.exception.ResponsiveStatusException;
 import com.newlevel.new_level_spring.model.DTOS.EventRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.SubtaskRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.TaskRequestDTO;
@@ -80,14 +80,14 @@ class DTOValidationTest {
 
   @Test
   void mapsNotFoundConflictAndBadRequestToTheirHttpStatuses() {
-    assertEquals(HttpStatus.NOT_FOUND, new ResponsiveStatusExeption("missing").getStatusCode());
+    assertEquals(HttpStatus.NOT_FOUND, new ResponsiveStatusException("missing").getStatusCode());
     assertEquals(
       HttpStatus.CONFLICT,
-      new ResponsiveStatusExeption(HttpStatus.CONFLICT, "already exists").getStatusCode()
+      new ResponsiveStatusException(HttpStatus.CONFLICT, "already exists").getStatusCode()
     );
     assertEquals(
       HttpStatus.BAD_REQUEST,
-      new ResponsiveStatusExeption(HttpStatus.BAD_REQUEST, "invalid").getStatusCode()
+      new ResponsiveStatusException(HttpStatus.BAD_REQUEST, "invalid").getStatusCode()
     );
   }
 }

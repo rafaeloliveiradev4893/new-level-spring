@@ -9,7 +9,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.newlevel.new_level_spring.exception.ResponsiveStatusExeption;
+import com.newlevel.new_level_spring.exception.ResponsiveStatusException;
 import com.newlevel.new_level_spring.model.DTOS.EventRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.EventResponseDTO;
 import com.newlevel.new_level_spring.model.DTOS.EventUpdateDTO;
@@ -32,7 +32,7 @@ public class EventService {
   @Transactional
   public EventResponseDTO createEvent(Jwt jwt, EventRequestDTO dto) {
     User user = userRepository.findById(jwt.getSubject())
-      .orElseThrow(() -> new ResponsiveStatusExeption("Usuário não encontrado"));
+      .orElseThrow(() -> new ResponsiveStatusException("Usuário não encontrado"));
 
     validateDates(dto.getStartDate(), dto.getEndDate());
 
@@ -73,14 +73,14 @@ public class EventService {
     Event event = findEventOwnedByUser(eventId, auth0Id);
 
     if (event.getIsCompleted()) {
-      throw new ResponsiveStatusExeption(
+      throw new ResponsiveStatusException(
         HttpStatus.CONFLICT,
         "Não é possível iniciar um evento concluído"
       );
     }
 
     if (event.getActualStartAt() != null) {
-      throw new ResponsiveStatusExeption(
+      throw new ResponsiveStatusException(
         HttpStatus.CONFLICT,
         "O evento já foi iniciado"
       );
@@ -155,12 +155,12 @@ public class EventService {
   public EventResponseDTO completeEvent(Long eventId, Jwt jwt) {
     String auth0Id = jwt.getSubject();
     User user = userRepository.findById(auth0Id)
-      .orElseThrow(() -> new ResponsiveStatusExeption("Usuário não encontrado"));
+      .orElseThrow(() -> new ResponsiveStatusException("Usuário não encontrado"));
 
     Event event = findEventOwnedByUser(eventId, auth0Id);
 
     if (event.getIsCompleted()) {
-      throw new ResponsiveStatusExeption(HttpStatus.CONFLICT, "O evento já foi completo");
+      throw new ResponsiveStatusException(HttpStatus.CONFLICT, "O evento já foi completo");
     }
 
     event.setCompletedAt(LocalDateTime.now());
@@ -176,12 +176,12 @@ public class EventService {
   public EventResponseDTO completeEventByTime(Long eventId, Jwt jwt) {
     String auth0Id = jwt.getSubject();
     User user = userRepository.findById(auth0Id)
-      .orElseThrow(() -> new ResponsiveStatusExeption("Usuário não encontrado"));
+      .orElseThrow(() -> new ResponsiveStatusException("Usuário não encontrado"));
 
     Event event = findEventOwnedByUser(eventId, auth0Id);
 
     if (event.getIsCompleted()) {
-      throw new ResponsiveStatusExeption(HttpStatus.CONFLICT, "O evento já foi completo");
+      throw new ResponsiveStatusException(HttpStatus.CONFLICT, "O evento já foi completo");
     }
 
     event.setActualEndAt(LocalDateTime.now());
@@ -205,24 +205,24 @@ public class EventService {
   private Event findEventOwnedByUser(Long eventId, String auth0Id) {
 
     Event event = eventRepository.findById(eventId)
-      .orElseThrow(() -> new ResponsiveStatusExeption("Evento não encontrado"));
+      .orElseThrow(() -> new ResponsiveStatusException("Evento não encontrado"));
 
     if (!event.getUser().getAuth0Id().equals(auth0Id)) {
-      throw new ResponsiveStatusExeption("Evento não encontrado");
+      throw new ResponsiveStatusException("Evento não encontrado");
     }
     return event;
   }
 
   private void validateDates(LocalDateTime start, LocalDateTime end) {
     if (start == null || end == null) {
-      throw new ResponsiveStatusExeption(
+      throw new ResponsiveStatusException(
         HttpStatus.BAD_REQUEST,
         "As datas de início e término são obrigatórias"
       );
     }
 
     if (end.isBefore(start)) {
-      throw new ResponsiveStatusExeption(
+      throw new ResponsiveStatusException(
         HttpStatus.BAD_REQUEST,
         "A data de término não pode ser anterior à data de início"
       );

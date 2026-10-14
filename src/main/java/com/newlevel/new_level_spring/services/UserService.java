@@ -4,7 +4,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.newlevel.new_level_spring.exception.ResponsiveStatusExeption;
+import com.newlevel.new_level_spring.exception.ResponsiveStatusException;
 import com.newlevel.new_level_spring.model.DTOS.UserResponseDTO;
 import com.newlevel.new_level_spring.model.User;
 import com.newlevel.new_level_spring.repository.UserRepository;
@@ -23,7 +23,7 @@ public class UserService {
 
     User user = userRepository.findById(auth0Id)
       .orElseThrow(() ->
-        new ResponsiveStatusExeption("Usuário não encontrado")
+        new ResponsiveStatusException("Usuário não encontrado")
       );
     return toResponseDTO(user);
   }
@@ -34,7 +34,7 @@ public class UserService {
       String name = jwt.getClaimAsString("name");
 
       if (existUserById(auth0Id)) {
-          throw new ResponsiveStatusExeption(HttpStatus.CONFLICT, "Usuário já existe");
+          throw new ResponsiveStatusException(HttpStatus.CONFLICT, "Usuário já existe");
       }
 
       User newUser = User.builder()
@@ -53,7 +53,7 @@ public class UserService {
 
     User user = userRepository.findById(auth0Id)
       .orElseThrow(() ->
-        new ResponsiveStatusExeption("Usuário não encontrado")
+        new ResponsiveStatusException("Usuário não encontrado")
       );
 
     String name = jwt.getClaimAsString("name"); //tá vindo como null
@@ -81,7 +81,7 @@ public class UserService {
   public User getUserById(String auth0Id){
     return userRepository.findById(auth0Id)
       .orElseThrow(() -> 
-        new ResponsiveStatusExeption("User not found")
+        new ResponsiveStatusException("User not found")
       );
   }
 
