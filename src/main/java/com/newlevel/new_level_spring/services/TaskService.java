@@ -84,10 +84,16 @@ public class TaskService {
     if (!task.getSubtasks().isEmpty()
         && task.getSubtasks().stream().allMatch(
           currentSubtask -> Boolean.TRUE.equals(currentSubtask.getIsCompleted()))) {
+      User user = userRepository.findById(jwt.getSubject())
+      .orElseThrow(() -> new ResponsiveStatusException("Usuário não encontrado"));
+      
       LocalDateTime completedAt = LocalDateTime.now();
       task.setIsCompleted(true);
       task.setCompletedAt(completedAt);
       task.setUpdatedAt(completedAt);
+
+      xpService.addXpForTaskCompletion(user, task.getDifficulty(), task.getCategory());
+      userRepository.save(user);
     }
 
     return toResponseDTO(taskRepository.save(task));
@@ -183,7 +189,7 @@ public class TaskService {
   public TaskResponseDTO completeTask(Long taskId, Jwt jwt) {
     String auth0Id = jwt.getSubject();
     User user = userRepository.findById(jwt.getSubject())
-      .orElseThrow(() -> new ResponsiveStatusException("Usuário não encontrado"));
+    .orElseThrow(() -> new ResponsiveStatusException("Usuário não encontrado"));
     
     Task task = findTaskOwnedByUser(taskId, auth0Id);
 
