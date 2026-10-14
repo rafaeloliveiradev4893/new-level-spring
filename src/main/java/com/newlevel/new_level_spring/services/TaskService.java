@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +59,10 @@ public class TaskService {
     Task task = findTaskOwnedByUser(taskId, jwt.getSubject());
 
     if (task.getIsCompleted()) {
-      throw new ResponsiveStatusExeption("Não é possível adicionar subtarefas a uma tarefa concluída");
+      throw new ResponsiveStatusExeption(
+        HttpStatus.CONFLICT,
+        "Não é possível adicionar subtarefas a uma tarefa concluída"
+      );
     }
 
     task.addSubtask(buildSubtask(dto));
@@ -71,7 +75,7 @@ public class TaskService {
     Subtask subtask = findSubtaskInTask(task, subtaskId);
 
     if (subtask.getIsCompleted()) {
-      throw new ResponsiveStatusExeption("A subtarefa já foi completa");
+      throw new ResponsiveStatusExeption(HttpStatus.CONFLICT, "A subtarefa já foi completa");
     }
 
     subtask.setIsCompleted(true);
@@ -104,7 +108,10 @@ public class TaskService {
     Subtask subtask = findSubtaskInTask(task, subtaskId);
 
     if (dto.getTitle() == null || dto.getTitle().isBlank()) {
-      throw new ResponsiveStatusExeption("O título da subtarefa é obrigatório");
+      throw new ResponsiveStatusExeption(
+        HttpStatus.BAD_REQUEST,
+        "O título da subtarefa é obrigatório"
+      );
     }
 
     subtask.setTitle(dto.getTitle().trim());
@@ -181,7 +188,7 @@ public class TaskService {
     Task task = findTaskOwnedByUser(taskId, auth0Id);
 
     if (task.getIsCompleted()) {
-      throw new ResponsiveStatusExeption("A tarefa já foi completa");
+      throw new ResponsiveStatusExeption(HttpStatus.CONFLICT, "A tarefa já foi completa");
     }
 
     task.setCompletedAt(LocalDateTime.now());
@@ -223,7 +230,10 @@ public class TaskService {
 
   private Subtask buildSubtask(SubtaskRequestDTO dto) {
     if (dto.getTitle() == null || dto.getTitle().isBlank()) {
-      throw new ResponsiveStatusExeption("O título da subtarefa é obrigatório");
+      throw new ResponsiveStatusExeption(
+        HttpStatus.BAD_REQUEST,
+        "O título da subtarefa é obrigatório"
+      );
     }
     return Subtask.builder().title(dto.getTitle().trim()).build();
   }

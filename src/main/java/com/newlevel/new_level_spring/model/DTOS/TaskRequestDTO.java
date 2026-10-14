@@ -6,6 +6,7 @@ import java.util.List;
 import com.newlevel.new_level_spring.types.Category;
 import com.newlevel.new_level_spring.types.Difficulty;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -29,5 +30,5 @@ public class TaskRequestDTO {
 
   private LocalDate dueDate;
 
-  private List<SubtaskRequestDTO> subtasks;
+  private List<@Valid SubtaskRequestDTO> subtasks;
 }

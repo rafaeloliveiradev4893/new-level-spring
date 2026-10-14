@@ -1,6 +1,7 @@
 package com.newlevel.new_level_spring.services;
 
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.newlevel.new_level_spring.exception.ResponsiveStatusExeption;
@@ -33,7 +34,7 @@ public class UserService {
       String name = jwt.getClaimAsString("name");
 
       if (existUserById(auth0Id)) {
-          throw new ResponsiveStatusExeption("Usuário já existe");
+          throw new ResponsiveStatusExeption(HttpStatus.CONFLICT, "Usuário já existe");
       }
 
       User newUser = User.builder()

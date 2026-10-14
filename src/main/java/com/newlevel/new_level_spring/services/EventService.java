@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,12 +74,14 @@ public class EventService {
 
     if (event.getIsCompleted()) {
       throw new ResponsiveStatusExeption(
+        HttpStatus.CONFLICT,
         "Não é possível iniciar um evento concluído"
       );
     }
 
     if (event.getActualStartAt() != null) {
       throw new ResponsiveStatusExeption(
+        HttpStatus.CONFLICT,
         "O evento já foi iniciado"
       );
     }
@@ -157,7 +160,7 @@ public class EventService {
     Event event = findEventOwnedByUser(eventId, auth0Id);
 
     if (event.getIsCompleted()) {
-      throw new ResponsiveStatusExeption("O evento já foi completo");
+      throw new ResponsiveStatusExeption(HttpStatus.CONFLICT, "O evento já foi completo");
     }
 
     event.setCompletedAt(LocalDateTime.now());
@@ -178,7 +181,7 @@ public class EventService {
     Event event = findEventOwnedByUser(eventId, auth0Id);
 
     if (event.getIsCompleted()) {
-      throw new ResponsiveStatusExeption("O evento já foi completo");
+      throw new ResponsiveStatusExeption(HttpStatus.CONFLICT, "O evento já foi completo");
     }
 
     event.setActualEndAt(LocalDateTime.now());
@@ -212,11 +215,17 @@ public class EventService {
 
   private void validateDates(LocalDateTime start, LocalDateTime end) {
     if (start == null || end == null) {
-      throw new ResponsiveStatusExeption("As datas de início e término são obrigatórias");
+      throw new ResponsiveStatusExeption(
+        HttpStatus.BAD_REQUEST,
+        "As datas de início e término são obrigatórias"
+      );
     }
 
     if (end.isBefore(start)) {
-      throw new ResponsiveStatusExeption("A data de término não pode ser anterior à data de início");
+      throw new ResponsiveStatusExeption(
+        HttpStatus.BAD_REQUEST,
+        "A data de término não pode ser anterior à data de início"
+      );
     }
   }
 
