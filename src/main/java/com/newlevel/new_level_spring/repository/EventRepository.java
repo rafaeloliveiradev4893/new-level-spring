@@ -13,6 +13,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
   List<Event> findAllByUserAuth0Id(String auth0Id);
 
+  void deleteAllByUser_Auth0Id(String auth0Id);
+
   @Query("""
     SELECT e FROM Event e
     WHERE e.user.auth0Id = :auth0Id

@@ -12,4 +12,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findAllByUserAuth0Id(String auth0Id);
 
     Optional<Task> findByIdAndUserAuth0Id(Long id, String auth0Id);
+
+    void deleteAllByUser_Auth0Id(String auth0Id);
 }

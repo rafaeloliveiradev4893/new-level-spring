@@ -7,8 +7,11 @@ import org.springframework.stereotype.Service;
 import com.newlevel.new_level_spring.exception.ResponsiveStatusException;
 import com.newlevel.new_level_spring.model.DTOS.UserResponseDTO;
 import com.newlevel.new_level_spring.model.User;
+import com.newlevel.new_level_spring.repository.EventRepository;
+import com.newlevel.new_level_spring.repository.TaskRepository;
 import com.newlevel.new_level_spring.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -18,6 +21,10 @@ public class UserService {
   private static final String AUTH0_NAME_CLAIM = "https://newlevelauth.com/name";
 
   private final UserRepository userRepository;
+
+  private final EventRepository eventRepository;
+
+  private final TaskRepository taskRepository;
   //Metodos externos
   public UserResponseDTO getCurrentUser(Jwt jwt) {
 
@@ -83,13 +90,14 @@ public class UserService {
     return toResponseDTO(updatedUser);
   }
 
-  //Não é possivel deletar o Usuario
+  @Transactional 
   public void deleteUser(Jwt jwt) {
-
     String auth0Id = jwt.getSubject();
 
     User user = getUserById(auth0Id);
 
+    eventRepository.deleteAllByUser_Auth0Id(auth0Id);
+    taskRepository.deleteAllByUser_Auth0Id(auth0Id);
     userRepository.delete(user);
   }
 
