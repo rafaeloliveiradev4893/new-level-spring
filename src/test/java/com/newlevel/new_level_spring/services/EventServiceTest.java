@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.newlevel.new_level_spring.exception.ResponsiveStatusException;
 import com.newlevel.new_level_spring.model.DTOS.EventRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.EventResponseDTO;
+import com.newlevel.new_level_spring.model.DTOS.EventUpdateDTO;
 import com.newlevel.new_level_spring.model.Event;
 import com.newlevel.new_level_spring.model.User;
 import com.newlevel.new_level_spring.repository.EventRepository;
@@ -134,5 +135,46 @@ class EventServiceTest {
     );
 
     assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+  }
+
+  @Test
+  void appliesPartialUpdatesUsingExistingEventValuesForDateValidation() {
+    EventUpdateDTO request = EventUpdateDTO.builder()
+      .description("Updated description")
+      .build();
+
+    EventResponseDTO response = eventService.updatePartialEvent(1L, jwt, request);
+
+    assertEquals("Event", response.getTitle());
+    assertEquals("Updated description", response.getDescription());
+    assertEquals(event.getStartDate(), response.getStartDate());
+    assertEquals(event.getEndDate(), response.getEndDate());
+    verify(eventRepository).save(event);
+  }
+
+  @Test
+  void completesEventByTimeAndAwardsXpOnce() {
+    EventResponseDTO response = eventService.completeEventByTime(1L, jwt);
+
+    assertTrue(response.getIsCompleted());
+    assertNotNull(response.getActualEndAt());
+    assertEquals(response.getActualEndAt(), response.getCompletedAt());
+    verify(xpService).addXpForTaskCompletion(user, Difficulty.MEDIUM, Category.STUDY);
+    verify(userRepository).save(user);
+    verify(eventRepository).save(event);
+  }
+
+  @Test
+  void rejectsCompletingAnAlreadyCompletedEvent() {
+    event.setIsCompleted(true);
+
+    ResponsiveStatusException exception = assertThrows(
+      ResponsiveStatusException.class,
+      () -> eventService.completeEvent(1L, jwt)
+    );
+
+    assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+    verify(xpService, org.mockito.Mockito.never())
+      .addXpForTaskCompletion(user, Difficulty.MEDIUM, Category.STUDY);
   }
 }

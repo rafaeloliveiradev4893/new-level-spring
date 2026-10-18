@@ -1,7 +1,7 @@
 package com.newlevel.new_level_spring.services;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.newlevel.new_level_spring.exception.ResponsiveStatusException;
 import com.newlevel.new_level_spring.model.DTOS.SubtaskRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.SubtaskUpdateDTO;
+import com.newlevel.new_level_spring.model.DTOS.TaskRequestDTO;
+import com.newlevel.new_level_spring.model.DTOS.TaskResponseDTO;
 import com.newlevel.new_level_spring.model.Subtask;
 import com.newlevel.new_level_spring.model.Task;
 import com.newlevel.new_level_spring.model.User;
@@ -147,6 +150,43 @@ class TaskServiceTest {
 
     assertTrue(task.getSubtasks().isEmpty());
     verify(taskRepository, org.mockito.Mockito.times(3)).save(task);
+  }
+
+  @Test
+  void createsTaskWithSubtasksAttachedToTheAuthenticatedUser() {
+    TaskRequestDTO request = new TaskRequestDTO();
+    request.setTitle("New task");
+    request.setDescription("Task description");
+    request.setCategory(Category.STUDY);
+    request.setDifficulty(Difficulty.MEDIUM);
+    request.setSubtasks(List.of(
+      SubtaskRequestDTO.builder().title("  Read chapter  ").build()
+    ));
+
+    TaskResponseDTO response = taskService.createTask(jwt, request);
+
+    assertEquals("New task", response.getTitle());
+    assertEquals(1, response.getSubtasks().size());
+    assertEquals("Read chapter", response.getSubtasks().get(0).getTitle());
+    verify(taskRepository).save(org.mockito.ArgumentMatchers.argThat(savedTask ->
+      savedTask.getUser() == user
+        && savedTask.getSubtasks().size() == 1
+        && savedTask.getSubtasks().get(0).getTask() == savedTask
+    ));
+  }
+
+  @Test
+  void rejectsCompletingAnAlreadyCompletedTaskWithoutAwardingXpAgain() {
+    task.setIsCompleted(true);
+
+    ResponsiveStatusException exception = assertThrows(
+      ResponsiveStatusException.class,
+      () -> taskService.completeTask(1L, jwt)
+    );
+
+    assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+    verify(xpService, org.mockito.Mockito.never())
+      .addXpForTaskCompletion(user, Difficulty.EASY, Category.OTHER);
   }
 
   private Subtask addSubtask(Long id) {

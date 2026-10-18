@@ -3,12 +3,16 @@ package com.newlevel.new_level_spring.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -19,13 +23,23 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.newlevel.new_level_spring.exception.ResponsiveStatusException;
 import com.newlevel.new_level_spring.model.DTOS.UserResponseDTO;
 import com.newlevel.new_level_spring.model.User;
+import com.newlevel.new_level_spring.repository.EventRepository;
+import com.newlevel.new_level_spring.repository.TaskRepository;
 import com.newlevel.new_level_spring.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
+  private static final String AUTH0_NAME_CLAIM = "https://newlevelauth.com/name";
+
   @Mock
   private UserRepository repository;
+
+  @Mock
+  private EventRepository eventRepository;
+
+  @Mock
+  private TaskRepository taskRepository;
 
   @Mock
   private Jwt jwt;
@@ -67,9 +81,9 @@ class UserServiceTest {
   @Test
   void createsUserFromJwtClaims() {
     when(jwt.getSubject()).thenReturn("auth|123");
-    when(jwt.getClaimAsString("name")).thenReturn("Rafa");
+    when(jwt.getClaimAsString(AUTH0_NAME_CLAIM)).thenReturn("Rafa");
     when(repository.existsById("auth|123")).thenReturn(false);
-    when(repository.save(org.mockito.ArgumentMatchers.any(User.class)))
+    when(repository.save(any(User.class)))
       .thenAnswer(invocation -> invocation.getArgument(0));
 
     UserResponseDTO response = userService.createUser(jwt);
@@ -94,10 +108,24 @@ class UserServiceTest {
   }
 
   @Test
+  void rejectsCreatingUserWhenNameClaimIsMissing() {
+    when(jwt.getSubject()).thenReturn("auth|123");
+    when(repository.existsById("auth|123")).thenReturn(false);
+
+    ResponsiveStatusException exception = assertThrows(
+      ResponsiveStatusException.class,
+      () -> userService.createUser(jwt)
+    );
+
+    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+    verify(repository, never()).save(any(User.class));
+  }
+
+  @Test
   void updatesAndDeletesExistingUser() {
     User user = User.builder().auth0Id("auth|123").name("Old").build();
     when(jwt.getSubject()).thenReturn("auth|123");
-    when(jwt.getClaimAsString("name")).thenReturn("New");
+    when(jwt.getClaimAsString(AUTH0_NAME_CLAIM)).thenReturn("New");
     when(repository.findById("auth|123")).thenReturn(Optional.of(user));
     when(repository.save(user)).thenReturn(user);
 
@@ -106,5 +134,19 @@ class UserServiceTest {
 
     assertEquals("New", response.getName());
     verify(repository).delete(user);
+  }
+
+  @Test
+  void deletesUserEventsAndTasksBeforeDeletingTheUser() {
+    User user = User.builder().auth0Id("auth|123").build();
+    when(jwt.getSubject()).thenReturn("auth|123");
+    when(repository.findById("auth|123")).thenReturn(Optional.of(user));
+
+    userService.deleteUser(jwt);
+
+    InOrder deletionOrder = inOrder(eventRepository, taskRepository, repository);
+    deletionOrder.verify(eventRepository).deleteAllByUser_Auth0Id("auth|123");
+    deletionOrder.verify(taskRepository).deleteAllByUser_Auth0Id("auth|123");
+    deletionOrder.verify(repository).delete(user);
   }
 }
