@@ -64,7 +64,11 @@ public class SecurityConfig {
 
   @Bean
   public JwtDecoder jwtDecoder() {
-    NimbusJwtDecoder jwtDecoder = (NimbusJwtDecoder) JwtDecoders.fromIssuerLocation(issuerUri);
+    String jwkSetUri = issuerUri.endsWith("/")
+      ? issuerUri + ".well-known/jwks.json"
+      : issuerUri + "/.well-known/jwks.json";
+
+    NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
 
     OAuth2TokenValidator<Jwt> audienceValidator = token ->
       token.getAudience().contains(audience)

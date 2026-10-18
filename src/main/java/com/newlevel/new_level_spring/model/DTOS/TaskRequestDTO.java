@@ -30,5 +30,6 @@ public class TaskRequestDTO {
 
   private LocalDate dueDate;
 
+  @Size(max = 50)
   private List<@Valid SubtaskRequestDTO> subtasks;
 }
