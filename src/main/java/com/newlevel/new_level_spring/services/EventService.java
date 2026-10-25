@@ -1,5 +1,6 @@
 package com.newlevel.new_level_spring.services;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,6 +36,7 @@ public class EventService {
       .orElseThrow(() -> new ResponsiveStatusException("Usuário não encontrado"));
 
     validateDates(dto.getStartDate(), dto.getEndDate());
+    validateStartDate(dto.getStartDate());
 
     Event event = new Event();
     event.setTitle(dto.getTitle());
@@ -104,6 +106,7 @@ public class EventService {
     Event event = findEventOwnedByUser(eventId, auth0Id);
 
     validateDates(dto.getStartDate(), dto.getEndDate());
+    validateStartDate(dto.getStartDate());
 
     event.setTitle(dto.getTitle());
     event.setDescription(dto.getDescription());
@@ -120,6 +123,10 @@ public class EventService {
     String auth0Id = jwt.getSubject();
 
     Event event = findEventOwnedByUser(eventId, auth0Id);
+
+    if (dto.getStartDate() != null) {
+      validateStartDate(dto.getStartDate());
+    }
 
     if (dto.getTitle() != null) {
       event.setTitle(dto.getTitle());
@@ -225,6 +232,15 @@ public class EventService {
       throw new ResponsiveStatusException(
         HttpStatus.BAD_REQUEST,
         "A data de término não pode ser anterior à data de início"
+      );
+    }
+  }
+
+  private void validateStartDate(LocalDateTime start) {
+    if (start.toLocalDate().isBefore(LocalDate.now())) {
+      throw new ResponsiveStatusException(
+        HttpStatus.BAD_REQUEST,
+        "A data de início do evento não pode estar no passado"
       );
     }
   }

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -50,8 +51,8 @@ class EventServiceTest {
       .id(1L)
       .user(user)
       .title("Event")
-      .startDate(LocalDateTime.parse("2026-10-14T10:00:00"))
-      .endDate(LocalDateTime.parse("2026-10-14T11:00:00"))
+      .startDate(LocalDate.now().plusDays(1).atTime(10, 0))
+      .endDate(LocalDate.now().plusDays(1).atTime(11, 0))
       .category(Category.STUDY)
       .difficulty(Difficulty.MEDIUM)
       .build();
@@ -78,6 +79,43 @@ class EventServiceTest {
 
     assertEquals("Study", response.getTitle());
     assertEquals(event.getStartDate(), response.getStartDate());
+    verify(eventRepository).save(any(Event.class));
+  }
+
+  @Test
+  void rejectsCreatingEventWithPastStartDate() {
+    EventRequestDTO request = EventRequestDTO.builder()
+      .title("Past event")
+      .startDate(LocalDate.now().minusDays(1).atTime(10, 0))
+      .endDate(LocalDate.now().minusDays(1).atTime(11, 0))
+      .category(Category.STUDY)
+      .difficulty(Difficulty.EASY)
+      .build();
+
+    ResponsiveStatusException exception = assertThrows(
+      ResponsiveStatusException.class,
+      () -> eventService.createEvent(jwt, request)
+    );
+
+    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+    org.mockito.Mockito.verify(eventRepository, org.mockito.Mockito.never())
+      .save(any(Event.class));
+  }
+
+  @Test
+  void allowsCreatingEventStartingToday() {
+    LocalDateTime startDate = LocalDate.now().atTime(10, 0);
+    EventRequestDTO request = EventRequestDTO.builder()
+      .title("Today's event")
+      .startDate(startDate)
+      .endDate(startDate.plusHours(1))
+      .category(Category.STUDY)
+      .difficulty(Difficulty.EASY)
+      .build();
+
+    EventResponseDTO response = eventService.createEvent(jwt, request);
+
+    assertEquals(startDate, response.getStartDate());
     verify(eventRepository).save(any(Event.class));
   }
 
