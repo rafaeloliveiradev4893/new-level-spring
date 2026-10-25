@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import com.newlevel.new_level_spring.model.DTOS.SubtaskRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.SubtaskUpdateDTO;
 import com.newlevel.new_level_spring.model.DTOS.TaskRequestDTO;
 import com.newlevel.new_level_spring.model.DTOS.TaskResponseDTO;
+import com.newlevel.new_level_spring.model.DTOS.TaskUpdateDTO;
 import com.newlevel.new_level_spring.model.Subtask;
 import com.newlevel.new_level_spring.model.Task;
 import com.newlevel.new_level_spring.model.User;
@@ -176,6 +178,51 @@ class TaskServiceTest {
   }
 
   @Test
+  void rejectsCreatingTaskWithPastDueDate() {
+    TaskRequestDTO request = validTaskRequest();
+    request.setDueDate(LocalDate.now().minusDays(1));
+
+    ResponsiveStatusException exception = assertThrows(
+      ResponsiveStatusException.class,
+      () -> taskService.createTask(jwt, request)
+    );
+
+    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+    org.mockito.Mockito.verify(taskRepository, org.mockito.Mockito.never())
+      .save(any(Task.class));
+  }
+
+  @Test
+  void rejectsUpdatingTaskWithPastDueDate() {
+    TaskRequestDTO request = validTaskRequest();
+    request.setDueDate(LocalDate.now().minusDays(1));
+
+    ResponsiveStatusException exception = assertThrows(
+      ResponsiveStatusException.class,
+      () -> taskService.updateTask(1L, jwt, request)
+    );
+
+    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+    org.mockito.Mockito.verify(taskRepository, org.mockito.Mockito.never())
+      .save(any(Task.class));
+  }
+
+  @Test
+  void rejectsPartiallyUpdatingTaskWithPastDueDate() {
+    TaskUpdateDTO request = new TaskUpdateDTO();
+    request.setDueDate(LocalDate.now().minusDays(1));
+
+    ResponsiveStatusException exception = assertThrows(
+      ResponsiveStatusException.class,
+      () -> taskService.updatePartialTask(1L, jwt, request)
+    );
+
+    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+    org.mockito.Mockito.verify(taskRepository, org.mockito.Mockito.never())
+      .save(any(Task.class));
+  }
+
+  @Test
   void rejectsCompletingAnAlreadyCompletedTaskWithoutAwardingXpAgain() {
     task.setIsCompleted(true);
 
@@ -193,5 +240,13 @@ class TaskServiceTest {
     Subtask subtask = Subtask.builder().id(id).title("Subtask " + id).build();
     task.addSubtask(subtask);
     return subtask;
+  }
+
+  private TaskRequestDTO validTaskRequest() {
+    TaskRequestDTO request = new TaskRequestDTO();
+    request.setTitle("Task");
+    request.setCategory(Category.OTHER);
+    request.setDifficulty(Difficulty.EASY);
+    return request;
   }
 }

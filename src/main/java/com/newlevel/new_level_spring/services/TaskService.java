@@ -1,5 +1,6 @@
 package com.newlevel.new_level_spring.services;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,6 +38,8 @@ public class TaskService {
   public TaskResponseDTO createTask(Jwt jwt, TaskRequestDTO dto) {
     User user = userRepository.findById(jwt.getSubject())
       .orElseThrow(() -> new ResponsiveStatusException("Usuário não encontrado"));
+
+    validateDueDate(dto.getDueDate());
 
     Task task = new Task();
     task.setTitle(dto.getTitle());
@@ -144,6 +147,8 @@ public class TaskService {
     String auth0Id = jwt.getSubject();
     Task task = findTaskOwnedByUser(taskId, auth0Id);
 
+    validateDueDate(dto.getDueDate());
+
     task.setTitle(dto.getTitle());
     task.setDescription(dto.getDescription());
     task.setDueDate(dto.getDueDate());
@@ -159,6 +164,8 @@ public class TaskService {
     String auth0Id = jwt.getSubject();
 
     Task task = findTaskOwnedByUser(taskId, auth0Id);
+
+    validateDueDate(dto.getDueDate());
 
     if (dto.getTitle() != null) {
       task.setTitle(dto.getTitle());
@@ -242,6 +249,15 @@ public class TaskService {
       );
     }
     return Subtask.builder().title(dto.getTitle().trim()).build();
+  }
+
+  private void validateDueDate(LocalDate dueDate) {
+    if (dueDate != null && dueDate.isBefore(LocalDate.now())) {
+      throw new ResponsiveStatusException(
+        HttpStatus.BAD_REQUEST,
+        "O prazo da tarefa não pode estar no passado"
+      );
+    }
   }
 
   private Subtask findSubtaskInTask(Task task, Long subtaskId) {
